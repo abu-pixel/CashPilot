@@ -1,0 +1,21 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Circle Background -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,15C32.5,15 15,32.5 15,54s17.5,39 39,39 39,-17.5 39,-39S75.5,15 54,15zM54,88c-18.8,0 -34,-15.2 -34,-34s15.2,-34 34,-34 34,15.2 34,34S72.8,88 54,88z" />
+    <!-- Currency Symbol (Simplified P) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,35h12c6.6,0 12,5.4 12,12s-5.4,12 -12,12H48V35zM60,54c3.3,0 6,-2.7 6,-6s-2.7,-6 -6,-6H54v12H60z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M48,54h6v19h-6z" />
+    <!-- Wings/Pilot element -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,50l-10,5 10,5zM78,50l10,5 -10,5z" />
+</vector>
