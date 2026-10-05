@@ -1,23 +1,25 @@
 package com.Abubeker.cashpilot.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.Abubeker.cashpilot.ui.BusinessViewModel
 import com.Abubeker.cashpilot.data.Customer
 import com.Abubeker.cashpilot.data.Transaction
@@ -43,40 +45,56 @@ fun CustomersScreen(viewModel: BusinessViewModel) {
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Customer")
-            }
+            ExtendedFloatingActionButton(
+                onClick = { showAddDialog = true },
+                icon = { Icon(Icons.Default.PersonAdd, contentDescription = null) },
+                text = { Text("Add Customer") },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     ) { padding ->
-        Column(modifier = Modifier.padding(padding).padding(16.dp)) {
-            Text("Customers", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-            
-            Spacer(modifier = Modifier.height(16.dp))
+        Column(modifier = Modifier.padding(padding).padding(horizontal = 16.dp)) {
+            Text(
+                text = "Customers",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.ExtraBold,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
             
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search customers...") },
+                placeholder = { Text("Search by name or phone...") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                singleLine = true
+                trailingIcon = if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { searchQuery = "" }) {
+                            Icon(Icons.Default.Clear, contentDescription = null)
+                        }
+                    }
+                } else null,
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(16.dp))
             
             if (filteredCustomers.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        if (searchQuery.isEmpty()) "No customers added yet." else "No results found.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
+                CustomerEmptyState(
+                    icon = Icons.Default.PeopleOutline,
+                    message = if (searchQuery.isEmpty()) "Start by adding your first customer" else "No customers found matching \"$searchQuery\""
+                )
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(filteredCustomers) { customer ->
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    items(filteredCustomers, key = { it.id }) { customer ->
                         val customerHistory = transactions.filter { it.customerId == customer.id }
-                        CustomerItem(
+                        CustomerItemImproved(
                             customer = customer, 
                             formatter = currencyFormatter, 
                             history = customerHistory,
@@ -89,7 +107,7 @@ fun CustomersScreen(viewModel: BusinessViewModel) {
     }
 
     if (showAddDialog) {
-        AddCustomerDialog(
+        AddCustomerDialogFull(
             onDismiss = { showAddDialog = false },
             onConfirm = { name, phone ->
                 viewModel.addCustomer(name, phone)
@@ -102,7 +120,7 @@ fun CustomersScreen(viewModel: BusinessViewModel) {
         AlertDialog(
             onDismissRequest = { customerToDelete = null },
             title = { Text("Delete Customer") },
-            text = { Text("Are you sure you want to delete ${customerToDelete?.name}? This will NOT delete their transaction history, but they will no longer be linked.") },
+            text = { Text("Are you sure you want to remove ${customerToDelete?.name}? Transactions will remain in ledger but will be unlinked.") },
             confirmButton = {
                 Button(
                     onClick = {
@@ -125,7 +143,7 @@ fun CustomersScreen(viewModel: BusinessViewModel) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CustomerItem(customer: Customer, formatter: NumberFormat, history: List<Transaction>, onLongClick: () -> Unit) {
+fun CustomerItemImproved(customer: Customer, formatter: NumberFormat, history: List<Transaction>, onLongClick: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Card(
@@ -134,7 +152,11 @@ fun CustomerItem(customer: Customer, formatter: NumberFormat, history: List<Tran
             .combinedClickable(
                 onClick = { expanded = !expanded },
                 onLongClick = onLongClick
-            )
+            ),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (customer.totalDebt > 0) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.1f) else MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
@@ -142,45 +164,79 @@ fun CustomerItem(customer: Customer, formatter: NumberFormat, history: List<Tran
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(customer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(customer.phone.ifBlank { "No phone" }, style = MaterialTheme.typography.bodySmall)
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Surface(
+                        modifier = Modifier.size(44.dp),
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            Text(
+                                text = customer.name.take(1).uppercase(),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(customer.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(customer.phone.ifBlank { "No phone number" }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                    }
                 }
                 Column(horizontalAlignment = Alignment.End) {
-                    Text("Debt", style = MaterialTheme.typography.labelSmall)
+                    Text("Debt Balance", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
                     Text(
                         formatter.format(customer.totalDebt),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = if (customer.totalDebt > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+                        fontWeight = FontWeight.ExtraBold,
+                        color = if (customer.totalDebt > 0) Color(0xFFC62828) else Color(0xFF2E7D32)
                     )
                 }
-                Icon(
-                    imageVector = if (expanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
             }
 
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(
+                visible = expanded,
+                enter = expandVertically() + fadeIn(),
+                exit = shrinkVertically() + fadeOut()
+            ) {
                 Column(modifier = Modifier.padding(top = 16.dp)) {
-                    Text("History", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                    Text("Recent Activity", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
                     if (history.isEmpty()) {
-                        Text("No transactions yet.", style = MaterialTheme.typography.bodySmall)
+                        Text("No transactions for this customer.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
                     } else {
-                        history.take(10).forEach { transaction ->
+                        history.take(5).forEach { transaction ->
                             val dateStr = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(transaction.date))
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text("$dateStr: ${transaction.type.name.replace("_", " ")}", style = MaterialTheme.typography.bodySmall)
-                                Text(
-                                    (if (transaction.type.name.contains("SALE") || transaction.isCredit) "+" else "-") + formatter.format(transaction.amount),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    fontWeight = FontWeight.Bold
-                                )
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = if (transaction.type.name.contains("SALE")) Icons.Default.ArrowOutward else Icons.Default.ArrowDownward,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = if (transaction.type.name.contains("SALE")) Color(0xFFC62828) else Color(0xFF2E7D32)
+                                    )
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(
+                                        text = transaction.type.name.replace("_", " ").lowercase()
+                                            .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }, 
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                                Row {
+                                    Text(dateStr, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.outline)
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        (if (transaction.type.name.contains("SALE") || transaction.isCredit) "+" else "-") + formatter.format(transaction.amount),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                         }
                     }
@@ -191,44 +247,74 @@ fun CustomerItem(customer: Customer, formatter: NumberFormat, history: List<Tran
 }
 
 @Composable
-fun AddCustomerDialog(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
+fun CustomerEmptyState(icon: ImageVector, message: String) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(64.dp),
+            tint = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.outline
+        )
+    }
+}
+
+@Composable
+fun AddCustomerDialogFull(onDismiss: () -> Unit, onConfirm: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var isNameError by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add New Customer") },
+        title = { Text("New Customer Profile", fontWeight = FontWeight.Bold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextField(
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Enter information to start tracking this customer's sales and debt.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.outline)
+                OutlinedTextField(
                     value = name, 
                     onValueChange = { 
                         name = it
-                        isNameError = false
+                        if (it.isNotBlank()) isNameError = false
                     }, 
-                    label = { Text("Name") },
+                    label = { Text("Full Name") },
                     isError = isNameError,
-                    supportingText = { if (isNameError) Text("Name is required") },
-                    modifier = Modifier.fillMaxWidth()
+                    supportingText = { if (isNameError) Text("Name is required to save") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
                 )
-                TextField(
+                OutlinedTextField(
                     value = phone, 
                     onValueChange = { phone = it }, 
-                    label = { Text("Phone") },
-                    modifier = Modifier.fillMaxWidth()
+                    label = { Text("Phone Number (Optional)") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true
                 )
             }
         },
         confirmButton = {
-            Button(onClick = { 
-                if (name.isNotBlank()) {
-                    onConfirm(name, phone)
-                } else {
-                    isNameError = true
-                }
-            }) {
-                Text("Add")
+            Button(
+                onClick = { 
+                    if (name.isNotBlank()) {
+                        onConfirm(name, phone)
+                    } else {
+                        isNameError = true
+                    }
+                },
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Text("Create Profile")
             }
         },
         dismissButton = {

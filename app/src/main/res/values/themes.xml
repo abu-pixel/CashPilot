@@ -1,15 +1,12 @@
 <resources>
-    <!-- Base application theme. -->
-    <style name="Theme.CashPilot" parent="Theme.Material3.DayNight.NoActionBar">
+    <!-- Modern Material 3 Theme -->
+    <style name="Theme.CashPilot" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/navy_primary</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/emerald_secondary</item>
-        <item name="colorOnSecondary">@color/white</item>
-        <!-- Status bar color. -->
         <item name="android:statusBarColor">@color/navy_primary</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
+    <!-- SplashScreen Theme -->
     <style name="Theme.App.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/navy_primary</item>
         <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>

@@ -56,9 +56,15 @@ interface BusinessDao {
 
     @Delete
     suspend fun deleteProduct(product: Product)
+
+    @Query("SELECT * FROM business_profile WHERE id = 1")
+    fun getBusinessProfile(): Flow<BusinessProfile?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBusinessProfile(profile: BusinessProfile)
 }
 
-@Database(entities = [Customer::class, Supplier::class, Transaction::class, Product::class], version = 2, exportSchema = false)
+@Database(entities = [Customer::class, Supplier::class, Transaction::class, Product::class, BusinessProfile::class], version = 3, exportSchema = false)
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun businessDao(): BusinessDao

@@ -40,10 +40,14 @@ android {
     }
 }
 
+// Correct modern configuration for Kotlin 2.0+ and Compose
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
-        freeCompilerArgs.add("-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api")
+        freeCompilerArgs.addAll(
+            "-Xopt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+        )
     }
 }
 
@@ -60,9 +64,10 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.core.splashscreen)
+    // Correct reference to Material components
     implementation(libs.material)
 
-    // Room Database
+    // Room Database - Offline First
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)

@@ -45,6 +45,7 @@ data class Transaction(
     val customerId: Long? = null,
     val supplierId: Long? = null,
     val productId: Long? = null,
+    val quantity: Int = 1,
     val isCredit: Boolean = false,
     val itemsJson: String? = null
 )
@@ -56,4 +57,12 @@ data class Product(
     val stock: Int = 0,
     val lowStockThreshold: Int = 10,
     val price: Double = 0.0
+)
+
+@Entity(tableName = "business_profile")
+data class BusinessProfile(
+    @PrimaryKey val id: Int = 1,
+    val shopName: String = "My Business",
+    val ownerName: String = "",
+    val currency: String = "ETB"
 )

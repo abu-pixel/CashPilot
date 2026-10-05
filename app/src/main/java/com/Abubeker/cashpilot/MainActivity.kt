@@ -6,12 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.AccountBalanceWallet
-import androidx.compose.material.icons.filled.Assessment
-import androidx.compose.material.icons.filled.Business
-import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,11 +21,11 @@ import com.Abubeker.cashpilot.ui.theme.CashPilotTheme
 
 sealed class Screen(val route: String, val label: String, val icon: @Composable () -> Unit) {
     object Dashboard : Screen("dashboard", "Home", { Icon(Icons.Default.Dashboard, contentDescription = null) })
-    object Customers : Screen("customers", "Customers", { Icon(Icons.Default.People, contentDescription = null) })
+    object Customers : Screen("customers", "People", { Icon(Icons.Default.People, contentDescription = null) })
     object Suppliers : Screen("suppliers", "Suppliers", { Icon(Icons.Default.Business, contentDescription = null) })
     object Inventory : Screen("inventory", "Stock", { Icon(Icons.Default.Inventory, contentDescription = null) })
-    object Cash : Screen("cash", "Cash", { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null) })
-    object Reports : Screen("reports", "Reports", { Icon(Icons.Default.Assessment, contentDescription = null) })
+    object Cash : Screen("cash", "Ledger", { Icon(Icons.Default.AccountBalanceWallet, contentDescription = null) })
+    object Reports : Screen("reports", "Insights", { Icon(Icons.Default.Assessment, contentDescription = null) })
 }
 
 class MainActivity : ComponentActivity() {
@@ -76,11 +71,24 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     NavHost(
-                        navController = navController, 
-                        startDestination = Screen.Dashboard.route, 
+                        navController = navController,
+                        startDestination = Screen.Dashboard.route,
                         modifier = Modifier.padding(innerPadding)
                     ) {
-                        composable(Screen.Dashboard.route) { DashboardScreen(viewModel) }
+                        composable(Screen.Dashboard.route) {
+                            DashboardScreen(
+                                viewModel = viewModel,
+                                onNavigateToScreen = { route ->
+                                    navController.navigate(route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                }
+                            )
+                        }
                         composable(Screen.Customers.route) { CustomersScreen(viewModel) }
                         composable(Screen.Suppliers.route) { SuppliersScreen(viewModel) }
                         composable(Screen.Inventory.route) { InventoryScreen(viewModel) }
